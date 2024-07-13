@@ -10,7 +10,6 @@ pub struct Process {
 }
 
 impl Process {
-    #[allow(unused)] // TODO: delete this line for Milestone 1
     pub fn new(pid: usize, ppid: usize, command: String) -> Process {
         Process { pid, ppid, command }
     }
@@ -22,8 +21,36 @@ impl Process {
     /// descriptor table.)
     #[allow(unused)] // TODO: delete this line for Milestone 3
     pub fn list_fds(&self) -> Option<Vec<usize>> {
-        // TODO: implement for Milestone 3
-        unimplemented!();
+        let format_path = format!("/proc/{}/fd", self.pid);
+        let mut fd_vec = Vec::<usize>::new();
+        for entry in fs::read_dir(format_path).ok()? {
+            let entry = entry.ok()?;
+            fd_vec.push(entry.file_name().into_string().unwrap().parse().unwrap());
+        }
+        Some(fd_vec)
+    }
+
+    pub fn print(&self) {
+        println!("========== \"{}\" (pid {}, ppid {}) ==========", self.command, self.pid, self.ppid);
+        match self.list_open_files() {
+            None => println!(
+                "Warning: could not inspect file descriptors for this process! \
+                    It might have exited just as we were about to look at its fd table, \
+                    or it might have exited a while ago and is waiting for the parent \
+                    to reap it."
+            ),
+            Some(open_files) => {
+                for (fd, file) in open_files {
+                    println!(
+                        "{:<4} {:<15} cursor: {:<4} {}",
+                        fd,
+                        format!("({})", file.access_mode),
+                        file.cursor,
+                        file.colorized_name(),
+                    );
+                }
+            }
+        }
     }
 
     /// This function returns a list of (fdnumber, OpenFile) tuples, if file descriptor
