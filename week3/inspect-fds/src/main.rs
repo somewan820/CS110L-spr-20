@@ -18,6 +18,11 @@ fn main() {
             match value {
                 Some(process) => {
                     process.print();
+                    let child_process_vec = ps_utils::get_child_processes(process.pid).ok();
+                    for child_process in child_process_vec.unwrap() {
+                        println!();
+                        child_process.print();
+                    }
                 },
                 None => {
                     println!("Target \"{}\" did not match any running PIDs or executables", target);
