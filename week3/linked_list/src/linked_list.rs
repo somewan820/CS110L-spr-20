@@ -1,5 +1,4 @@
 use std::fmt;
-use std::option::Option;
 
 pub struct LinkedList<T> {
     head: Option<Box<Node<T>>>,
